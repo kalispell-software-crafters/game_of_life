@@ -1,12 +1,27 @@
-const ROWS: usize = 10; //Operating determined size
+use std::{thread, time};
+
+const ROWS: usize = 10; //Operating system determined size
 const COLUMNS: usize = 10;
 
 fn main() {
     let mut board = [[' '; ROWS]; COLUMNS];
+    board[5][4] = '#';
     board[5][5] = '#';
-    print_board(&board);
-    println!("{}", get_live_neighbors(4, 4, &board));
-    println!("{}", get_live_neighbors(0, 0, &board));
+    board[5][6] = '#';
+    board[6][5] = '#';
+    board[3][2] = '#';
+    board[3][3] = '#';
+    board[8][7] = '#';
+    print_board(&board); 
+
+    for _ in 0..25 {
+        board = advance_generation(&board);
+        let board_str = board_to_string(&board);
+        print!("{}", board_str);
+        let sleep_duration = time::Duration::from_secs(1);
+        thread::sleep(sleep_duration);
+        clear_board_display(&board_str);
+    }
 }
 
 fn print_board(board: &[[char; ROWS]; COLUMNS]) {
@@ -16,6 +31,23 @@ fn print_board(board: &[[char; ROWS]; COLUMNS]) {
         }
         println!("");
     }
+}
+
+fn board_to_string(board: &[[char; ROWS]; COLUMNS]) -> String {
+    let mut board_str = String::new();
+    for row in board {
+        for cell in row {
+            board_str.push(*cell);
+        }
+        board_str.push('\n');
+    }
+
+    board_str
+}
+
+fn clear_board_display(board_str: &String) {
+    let backspaces = "\x08".repeat(board_str.len());
+    print!("{}", backspaces)
 }
 
 fn get_live_neighbors(x: usize, y: usize, board: &[[char; ROWS]; COLUMNS]) -> usize {
@@ -41,8 +73,35 @@ fn get_live_neighbors(x: usize, y: usize, board: &[[char; ROWS]; COLUMNS]) -> us
     return count;
 }
 
+fn advance_generation(board: &[[char; ROWS]; COLUMNS]) -> [[char; ROWS]; COLUMNS] {
+    let mut new_board = [[' '; ROWS]; COLUMNS];
+
+    for i in 0..COLUMNS {
+        for j in 0..ROWS {
+            let count = get_live_neighbors(i, j, &board);
+            if count < 2 {
+                // Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+                new_board[i][j] = ' ';
+            } else if count == 2 {
+                // Any live cell with two or three live neighbours lives on to the next generation.
+                new_board[i][j] = board[i][j];
+            } else if count > 3 {
+                // Any live cell with more than three live neighbours dies, as if by overpopulation.
+                new_board[i][j] = ' ';
+            } else if count == 3 {
+                // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+                new_board[i][j] = '#';
+            }
+        }
+    }
+
+    return new_board;
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::advance_generation;
+
     use super::{get_live_neighbors, COLUMNS, ROWS};
 
     #[test]
@@ -74,16 +133,38 @@ mod tests {
         let bottom_right_count = get_live_neighbors(9, 9, &board);
         assert_eq!(bottom_right_count, 1);
     }
+
+    #[test]
+    fn should_die_with_one_neighbor() {
+        let mut board = [[' '; ROWS]; COLUMNS];
+
+        board[5][5] = '#';
+        board[5][6] = '#';
+
+        let new_board = advance_generation(&board);
+        assert_eq!(new_board[5][5], ' ', "Should not be alive");
+        assert_eq!(new_board[5][6], ' ', "Should not be alive");
+    }
+
+    #[test]
+    fn should_live_with_three_neighbors() {
+        let mut board = [[' '; ROWS]; COLUMNS];
+
+        board[5][4] = '#';
+        board[5][5] = '#';
+        board[5][6] = '#';
+        board[6][5] = '#';
+
+        let new_board = advance_generation(&board);
+        assert_eq!(new_board[5][4], '#', "Should be alive");
+        assert_eq!(new_board[5][5], '#', "Should be alive");
+        assert_eq!(new_board[5][6], '#', "Should be alive");
+        assert_eq!(new_board[6][5], '#', "Should be alive");
+    }
 }
 
 // Need an initial state
 // Alive = #; Dead = ' '
-
-// Rules
-// Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-// Any live cell with two or three live neighbours lives on to the next generation.
-// Any live cell with more than three live neighbours dies, as if by overpopulation.
-// Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
 // Short Version
 // Any live cell with two or three live neighbours survives.
