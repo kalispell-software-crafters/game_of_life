@@ -1,13 +1,15 @@
-const ROWS: usize = 10;  //Operating determined size
+const ROWS: usize = 10; //Operating determined size
 const COLUMNS: usize = 10;
 
 fn main() {
     let mut board = [[' '; ROWS]; COLUMNS];
     board[5][5] = '#';
     print_board(&board);
+    println!("{}", get_live_neighbors(4, 4, &board));
+    println!("{}", get_live_neighbors(0, 0, &board));
 }
 
-fn print_board(board:&[[char; ROWS]; COLUMNS]) {
+fn print_board(board: &[[char; ROWS]; COLUMNS]) {
     for row in board {
         for cell in row {
             print!("{}", cell);
@@ -16,9 +18,31 @@ fn print_board(board:&[[char; ROWS]; COLUMNS]) {
     }
 }
 
+fn get_live_neighbors(x: usize, y: usize, board: &[[char; ROWS]; COLUMNS]) -> usize {
+    let mut count = 0;
+
+    let lower_x = if x == 0 { 0 } else { x - 1 };
+    let upper_x = if x == COLUMNS - 1 { COLUMNS - 1 } else { x + 1 };
+    
+    let lower_y = if y == 0 { 0 } else { y - 1 };
+    let upper_y = if y == ROWS - 1 { ROWS - 1 } else { y + 1 };
+
+    for i in lower_x..=upper_x {
+        for j in lower_y..=upper_y {
+            if i == x && j == y {
+                continue;
+            }
+            if board[i][j] == '#' {
+                count += 1;
+            }
+        }
+    }
+
+    return count;
+}
+
 // Need an initial state
 // Alive = #; Dead = ' '
-
 
 // Rules
 // Any live cell with fewer than two live neighbours dies, as if by underpopulation.
