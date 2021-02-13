@@ -23,7 +23,7 @@ fn get_live_neighbors(x: usize, y: usize, board: &[[char; ROWS]; COLUMNS]) -> us
 
     let lower_x = if x == 0 { 0 } else { x - 1 };
     let upper_x = if x == COLUMNS - 1 { COLUMNS - 1 } else { x + 1 };
-    
+
     let lower_y = if y == 0 { 0 } else { y - 1 };
     let upper_y = if y == ROWS - 1 { ROWS - 1 } else { y + 1 };
 
@@ -39,6 +39,41 @@ fn get_live_neighbors(x: usize, y: usize, board: &[[char; ROWS]; COLUMNS]) -> us
     }
 
     return count;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{get_live_neighbors, COLUMNS, ROWS};
+
+    #[test]
+    fn test_no_count_self() {
+        let mut board = [[' '; ROWS]; COLUMNS];
+        board[5][5] = '#';
+
+        let count = get_live_neighbors(5, 5, &board);
+        assert_eq!(count, 0, "Should not count self");
+    }
+
+    #[test]
+    fn test_corners() {
+        let mut board = [[' '; ROWS]; COLUMNS];
+        board[0][1] = '#';
+        board[1][9] = '#';
+        board[9][1] = '#';
+        board[9][8] = '#';
+
+        let top_left_count = get_live_neighbors(0, 0, &board);
+        assert_eq!(top_left_count, 1);
+
+        let top_right_count = get_live_neighbors(9, 9, &board);
+        assert_eq!(top_right_count, 1);
+
+        let bottom_left_count = get_live_neighbors(9, 0, &board);
+        assert_eq!(bottom_left_count, 1);
+
+        let bottom_right_count = get_live_neighbors(9, 9, &board);
+        assert_eq!(bottom_right_count, 1);
+    }
 }
 
 // Need an initial state
